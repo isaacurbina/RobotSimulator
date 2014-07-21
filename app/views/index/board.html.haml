@@ -1,0 +1,196 @@
+%head
+	%link{:type => "text/css", :rel => "stylesheet", :href => "/css/bootstrap.css"}
+	%link{:type => "text/css", :rel => "stylesheet", :href => "http://fonts.googleapis.com/css?family=Open+Sans"}
+
+%body
+	%h1 Robot Simulator
+	%h3 SELECTED ACTION
+
+	- pos_x= cookies[:pos_x].to_i-1
+	- pos_y= cookies[:pos_y].to_i-1
+	- facing= cookies[:facing]
+
+	- if params.has_key?(:report)
+		REPORT
+		%br
+
+	- if params.has_key?(:create_board)
+		CREATE BOARD
+		%br
+		- table_width= params[:table_width].to_i
+		- table_height=  params[:table_height].to_i
+		- cookies[:table_width] = { value:table_width, expires: 1.hour.from_now }
+		- cookies[:table_height] = { value:table_height, expires: 1.hour.from_now }
+		- pos_x= -1
+		- pos_y= -1
+	- else
+		- table_width= cookies[:table_width].to_i
+		- table_height= cookies[:table_height].to_i
+
+	- if params.has_key?(:place)
+		PLACE
+		%br
+		- place_x= params[:place_x].to_i
+		- place_y=  params[:place_y].to_i
+		- facing= params[:facing]
+		- valid_mov= true
+		- if place_x > table_width || place_x <= 0
+			- valid_mov= false
+		- if place_y > table_height || place_y <= 0
+			- valid_mov= false
+		VALID MOV
+		= valid_mov
+		- if valid_mov
+			- pos_x= place_x-1
+			- pos_y= place_y-1
+			- cookies[:pos_x] = { value:pos_x+1, expires: 1.hour.from_now }
+			- cookies[:pos_y] = { value:pos_y+1, expires: 1.hour.from_now }
+			- cookies[:facing] = { value:facing, expires: 1.hour.from_now }
+		%br
+
+	- if params.has_key?(:move_left) || params.has_key?(:move_right)
+		- if facing=="North"
+			- if params.has_key?(:move_left)
+				- facing = "West"
+			- else
+				- facing = "East"
+		- elsif facing=="East"
+			- if params.has_key?(:move_left)
+				- facing = "North"
+			- else
+				- facing = "South"
+		- elsif facing=="South"
+			- if params.has_key?(:move_left)
+				- facing = "East"
+			- else
+				- facing = "West"
+		- elsif facing=="West"
+			- if params.has_key?(:move_left)
+				- facing = "South"
+			- else
+				- facing = "North"
+		- cookies[:facing] = { value:facing, expires: 1.hour.from_now }
+		- if params.has_key?(:move_left) 
+			MOVE LEFT
+		- if params.has_key?(:move_right)
+			MOVE RIGHT
+		%br
+
+
+	- if params.has_key?(:move)
+
+		MOVE ONE STEP FORWARD
+		%br
+
+		- if facing=="North"
+			- pos_y-=1
+		- elsif facing=="East"
+			- pos_x+=1
+		- elsif facing=="South"
+			- pos_y+=1
+		- elsif facing=="West"
+			- pos_x-=1
+
+		- valid_mov = true
+		- if pos_x >= table_width || pos_x < 0
+			- valid_mov= false
+		- if pos_y >= table_height || pos_y < 0
+			- valid_mov= false
+
+		- if !valid_mov
+			CANNOT KEEP MOVING FORWARD
+			%br
+			- pos_x= cookies[:pos_x].to_i-1
+			- pos_y= cookies[:pos_y].to_i-1
+		- cookies[:pos_x] = { value:pos_x+1, expires: 1.hour.from_now }
+		- cookies[:pos_y] = { value:pos_y+1, expires: 1.hour.from_now }
+		- cookies[:facing] = { value:facing, expires: 1.hour.from_now }
+
+	- for j in 0...table_height
+		- for i in 0...table_width
+			%div{ :class=> "tile", :id => "tile_#{i}_#{j}" }
+				- if i==pos_x && j==pos_y
+					= image_tag("android.png", :class => "android #{facing}")
+		%br
+
+	%br
+	%br
+
+	#forms
+		%h2 PLACE
+		%form{ :action => "/index/board", :method => "get" }
+			%input{:type=>"hidden", :value=>"yes", :name=>"place"}
+			%p
+				Row:
+				<input type="number" name="place_x" value="#{pos_x+1}">
+			%p
+				Column:
+				<input type="number" name="place_y" value="#{pos_y+1}">
+			%p
+				Facing:
+				<select class="form-control" name="facing">
+				<option value="North">North</option>
+				- if facing=="East"
+					<option selected="selected" value="East">East</option>
+				- else
+					<option value="East">East</option>
+				- if facing=="South"
+					<option selected="selected" value="South">South</option>
+				- else
+					<option value="South">South</option>
+				- if facing=="West"
+					<option selected="selected" value="West">West</option>
+				- else
+					<option value="West">West</option>
+				</select>
+
+			<button type="submit" class="btn btn-primary btn-lg">Place!</button>
+
+		%br
+
+		- if pos_x >= 0 && pos_y >= 0
+			%h2 MOVE
+
+			%form{ :action => "/index/board", :method => "get" }
+				%input{:type=>"hidden", :value=>"yes", :name=>"move_left" }
+				<button type="submit" class="btn btn-primary btn-lg">&#8592;Left</button>
+
+			%br
+
+			%form{ :action => "/index/board", :method => "get" }
+				%input{:type=>"hidden", :value=>"yes", :name=>"move_right" }
+				<button type="submit" class="btn btn-primary btn-lg">Right&#8594;</button>
+
+			%br
+
+			%form{ :action => "/index/board", :method => "get" }
+				%input{:type=>"hidden", :value=>"yes", :name=>"move" }
+				<button type="submit" class="btn btn-primary btn-lg">Move&#8593;</button>
+
+			%br
+
+			%form{ :action => "/index/board", :method => "get" }
+				%input{:type=>"hidden", :value=>"yes", :name=>"report" }
+				<button type="submit" class="btn btn-primary btn-lg">Report</button>
+
+	- if params.has_key?(:report) || true
+		%div{:class => "debugging"}
+			%p
+				Board Size:
+				= table_width
+				X
+				= table_height
+			%p
+				Position:
+				= pos_x+1
+				,
+				= pos_y+1
+			- if params.has_key?(:place)
+				%p
+					Place:
+					= place_x
+					,
+					= place_y
+			%p
+				Facing:
+				= facing

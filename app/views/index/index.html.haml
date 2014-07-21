@@ -1,0 +1,17 @@
+%h1 Robot Simulator
+
+%head
+	%link{:type => "text/css", :rel => "stylesheet", :href => "/css/bootstrap.css"}
+	%link{:type => "text/css", :rel => "stylesheet", :href => "http://fonts.googleapis.com/css?family=Open+Sans"}
+
+%body
+	%form{ :action => "/index/board", :method => "get" }
+		%input{:type=>"hidden", :value=>"yes", :name=>"create_board"}
+		%p
+			Table Width:
+			<input type="number" name="table_width" value="5" min="1" max="10">
+		%p
+			Table Height:
+			<input type="number" name="table_height" value="5" min="1" max="10">
+
+		<button type="submit" class="btn btn-primary btn-lg">Go!</button>
